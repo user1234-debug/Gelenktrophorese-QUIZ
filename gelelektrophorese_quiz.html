@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gelelektrophorese – Biologie Quiz</title>
+    <!-- Tailwind CSS für responsives, modernes Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top right, #0f172a, #020617);
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* Fluoreszierender UV-Gel-Effekt für Buchstaben-Kästchen */
+        .uv-glow-green {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.45);
+        }
+        .uv-glow-cyan {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+        }
+        .uv-glow-red {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.85); opacity: 0; }
+            70% { transform: scale(1.06); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-4 sm:p-6">
+
+    <!-- Hauptcontainer: Fokus rein auf das Quiz -->
+    <main class="w-full max-w-2xl bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-8 shadow-2xl uv-glow-cyan backdrop-blur-md">
+        
+        <!-- Kopfbereich: Titel & Fortschritt -->
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-5 border-b border-slate-800">
+            <div>
+                <span class="text-xs font-bold uppercase tracking-widest text-cyan-400">Biologie Q1/2 • Lernkontrolle</span>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Gelelektrophorese-Quiz</h1>
+            </div>
+            <div id="progress-badge" class="self-start sm:self-auto px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-semibold text-slate-300">
+                Frage <span id="current-q-num" class="text-cyan-400 font-bold">1</span> von <span id="total-q-num">10</span>
+            </div>
+        </header>
+
+        <!-- Lösungswort-Leiste (Permanent sichtbar) -->
+        <section aria-label="Lösungswort-Fortschritt" class="my-6 bg-slate-950/70 border border-slate-800/90 rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-2.5">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <!-- Kleines DNA/Schloss SVG-Icon -->
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    Gesuchtes Lösungswort
+                </span>
+                <span id="unlocked-count" class="text-xs text-slate-400 font-medium">0 / 10 Buchstaben</span>
+            </div>
+
+            <!-- 10 Buchstaben-Kästchen (7 + 3 Gruppierung) -->
+            <div id="codeword-boxes" class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
+                <!-- Wird dynamisch per JS befüllt -->
+            </div>
+        </section>
+
+        <!-- Quiz-Bereich (Aktive Frage) -->
+        <section id="quiz-container" class="animate-fade">
+            <!-- Fragetext -->
+            <div class="mb-5">
+                <div class="inline-flex items-center gap-2 text-xs font-medium text-cyan-300 bg-cyan-950/50 border border-cyan-800/50 px-2.5 py-1 rounded-lg mb-3">
+                    <span>Belohnung bei richtiger Antwort:</span>
+                    <span id="reward-letter-hint" class="font-bold text-white">Buchstabe #1</span>
+                </div>
+                <h2 id="question-text" class="text-lg sm:text-xl font-bold text-slate-100 leading-snug">
+                    <!-- Frage wird hier geladen -->
+                </h2>
+            </div>
+
+            <!-- Optionales Mini-Gel-Schema für die Kriminalistik-Frage (Frage 6) -->
+            <div id="gel-visual" class="hidden mb-5 bg-slate-950 border border-slate-800 rounded-2xl p-4">
+                <p class="text-xs text-slate-400 mb-2 font-medium text-center">Schema: Tatort-Kaugummi vs. Verdächtige (Auswertung)</p>
+                <div class="grid grid-cols-5 gap-2 text-center text-[11px] sm:text-xs font-semibold text-slate-300">
+                    <div class="bg-slate-900 rounded-xl p-2 border border-slate-800">
+                        <div class="text-cyan-400 mb-1.5">Marker</div>
+                        <div class="space-y-1.5 text-[10px] text-slate-400">
+                            <div class="bg-cyan-500/30 text-cyan-200 rounded py-0.5">6000 bp</div>
+                            <div class="bg-cyan-500/30 text-cyan-200 rounded py-0.5">3500 bp</div>
+                            <div class="bg-cyan-500/30 text-cyan-200 rounded py-0.5">2500 bp</div>
+                            <div class="bg-cyan-500/30 text-cyan-200 rounded py-0.5">1500 bp</div>
+                            <div class="bg-cyan-500/30 text-cyan-200 rounded py-0.5">800 bp</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl p-2 border border-amber-500/40">
+                        <div class="text-amber-400 mb-1.5">Kaugummi</div>
+                        <div class="space-y-1.5 text-[10px]">
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="bg-amber-400 text-slate-950 font-bold rounded py-0.5">2500</div>
+                            <div class="bg-amber-400 text-slate-950 font-bold rounded py-0.5">1500</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl p-2 border border-slate-800">
+                        <div class="text-slate-300 mb-1.5">Suspect A</div>
+                        <div class="space-y-1.5 text-[10px]">
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="bg-blue-400 text-slate-950 font-bold rounded py-0.5">2500</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl p-2 border border-slate-800">
+                        <div class="text-slate-300 mb-1.5">Suspect B</div>
+                        <div class="space-y-1.5 text-[10px]">
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="bg-blue-400 text-slate-950 font-bold rounded py-0.5">2500</div>
+                            <div class="bg-blue-400 text-slate-950 font-bold rounded py-0.5">1500</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl p-2 border border-slate-800">
+                        <div class="text-slate-300 mb-1.5">Suspect C</div>
+                        <div class="space-y-1.5 text-[10px]">
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="bg-blue-400 text-slate-950 font-bold rounded py-0.5">3500</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="py-0.5 opacity-0">-</div>
+                            <div class="bg-blue-400 text-slate-950 font-bold rounded py-0.5">800</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Antwortmöglichkeiten -->
+            <div id="options-list" class="space-y-3">
+                <!-- Antwort-Buttons werden dynamisch erzeugt -->
+            </div>
+
+            <!-- Sofortiges Feedback & Erklärung bei Antwort -->
+            <div id="feedback-box" class="hidden mt-5 rounded-2xl p-4 border animate-fade">
+                <div class="flex items-start gap-3">
+                    <div id="feedback-icon" class="mt-0.5 shrink-0"></div>
+                    <div class="text-sm">
+                        <p id="feedback-title" class="font-bold text-base mb-1"></p>
+                        <p id="feedback-correct-answer" class="hidden font-semibold text-emerald-300 mb-1.5"></p>
+                        <p id="feedback-explanation" class="text-slate-300 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weiter-Button -->
+            <div class="mt-6 flex justify-end">
+                <button id="next-btn" class="hidden w-full sm:w-auto px-6 py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 active:scale-[0.99] text-slate-950 font-bold text-sm transition-all shadow-lg shadow-cyan-500/20 cursor-pointer">
+                    Nächste Frage →
+                </button>
+            </div>
+        </section>
+
+        <!-- Auswertungs-Bildschirm (Am Ende des Quiz) -->
+        <section id="result-container" class="hidden animate-fade">
+            <div class="text-center mb-6">
+                <div id="score-badge" class="inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2"></div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-2">
+                    Ergebnis: <span id="final-score" class="text-cyan-400">0</span> von 10 richtig
+                </h2>
+                <p id="result-subtitle" class="text-sm text-slate-400"></p>
+            </div>
+
+            <!-- Lösungswort-Check / Auflösung -->
+            <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 mb-6">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-cyan-400 mb-2">Lösungswort-Überprüfung</h3>
+                <p id="codeword-prompt-text" class="text-sm text-slate-300 mb-3"></p>
+                
+                <div class="flex flex-col sm:flex-row gap-2.5">
+                    <input 
+                        type="text" 
+                        id="codeword-input" 
+                        maxlength="10" 
+                        placeholder="10-stelliges Lösungswort..." 
+                        class="flex-1 uppercase tracking-[0.2em] font-bold text-center sm:text-left px-4 py-3 rounded-xl bg-slate-900 border border-slate-700 text-white focus:outline-none focus:border-cyan-400"
+                    >
+                    <div class="flex gap-2">
+                        <button 
+                            id="check-codeword-btn" 
+                            class="flex-1 sm:flex-none px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition-all cursor-pointer"
+                        >
+                            Prüfen
+                        </button>
+                        <button 
+                            id="reveal-codeword-btn" 
+                            type="button"
+                            class="flex-1 sm:flex-none px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-sm transition-all cursor-pointer"
+                        >
+                            Auflösen
+                        </button>
+                    </div>
+                </div>
+                <p id="codeword-status-msg" class="mt-2.5 text-sm font-semibold hidden"></p>
+            </div>
+
+            <!-- Detaillierte Auswertung der falschen (und aller) Fragen -->
+            <div id="wrong-answers-section" class="mb-6">
+                <h3 id="review-heading" class="text-base font-bold text-white mb-3 flex items-center gap-2">
+                    <!-- Überschrift wird dynamisch angepasst -->
+                </h3>
+                <div id="review-list" class="space-y-3">
+                    <!-- Karten für falsche Antworten & Lösungen -->
+                </div>
+            </div>
+
+            <!-- Neustart-Button -->
+            <div class="flex justify-center pt-2">
+                <button id="restart-btn" class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold text-sm transition-all cursor-pointer">
+                    ↻ Quiz neu starten
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        /**
+         * Quiz-Daten basierend auf dem Biologie Q1/2 Lernportfolio zur Gelelektrophorese.
+         * Lösungswort: A G A R O S E G E L (10 Buchstaben = 10 Fragen)
+         */
+        const SOLUTION_WORD = "AGAROSEGEL";
+
+        const quizQuestions = [
+            {
+                letter: "A",
+                question: "Warum wandert DNA bei der Gelelektrophorese in Richtung des Pluspols (Anode)?",
+                options: [
+                    "Weil sie aufgrund ihrer Phosphatgruppen negativ geladen ist.",
+                    "Weil sie durch den Ladepuffer positiv aufgeladen wird.",
+                    "Weil die Poren des Gels sie magnetisch anziehen.",
+                    "Weil sie ausschließlich aus basischen Aminosäuren besteht."
+                ],
+                correctIndex: 0,
+                explanation: "DNA besitzt in ihrem Zucker-Phosphat-Rückgrat negativ geladene Phosphatgruppen. Im elektrischen Feld bewegt sie sich daher vom Minuspol (Kathode) zum Pluspol (Anode)."
+            },
+            {
+                letter: "G",
+                question: "Wie wirkt sich die Fragmentlänge auf die Wanderungsgeschwindigkeit der DNA im Gel aus?",
+                options: [
+                    "Besonders lange DNA-Fragmente wandern am schnellsten durch das Gel.",
+                    "Das Gel wirkt wie ein Sieb: Kurze Fragmente wandern schneller und weiter als lange.",
+                    "Alle DNA-Fragmente bewegen sich unabhängig von ihrer Länge gleich schnell.",
+                    "Kurze Fragmente bleiben direkt in den Geltaschen hängen."
+                ],
+                correctIndex: 1,
+                explanation: "Das Gel wirkt wie ein feinmaschiges Sieb. Kurze DNA-Fragmente passieren die Poren leichter als lange Fragmente und legen in derselben Zeit eine größere Strecke zurück."
+            },
+            {
+                letter: "A",
+                question: "Worin unterscheiden sich Agarose-Gele und Polyacrylamid-Gele hinsichtlich ihrer Porengröße und Verwendung?",
+                options: [
+                    "Agarose-Gele (ca. 150 nm bei 1 %) sind relativ großporig für DNA; Polyacrylamid-Gele (3–6 nm) trennen kleinere Proteine.",
+                    "Polyacrylamid-Gele besitzen mit 150 nm die größeren Poren und dienen nur für sehr lange DNA.",
+                    "Beide Gelarten haben exakt dieselbe Porengröße von 50 nm.",
+                    "Agarose-Gele werden ausschließlich für kleine Proteine unter 5 nm verwendet."
+                ],
+                correctIndex: 0,
+                explanation: "1%ige Agarose-Gele haben eine Porengröße von ca. 150 nm (ideal für DNA und größere Proteine), während Polyacrylamid-Gele sehr feine Poren von 3 bis 6 nm für kleinere Proteinmoleküle besitzen."
+            },
+            {
+                letter: "R",
+                question: "Welchen Einfluss hat die räumliche Konformation (Form) der DNA auf ihre Wanderungsgeschwindigkeit?",
+                options: [
+                    "Zirkuläre (ringförmige) DNA wandert deutlich schneller als alle anderen Formen.",
+                    "Die räumliche Struktur hat keinerlei Einfluss auf die Geschwindigkeit im Gel.",
+                    "Kompakte Supercoiled-DNA wandert schneller als lineare oder offene zirkuläre DNA.",
+                    "Lineare DNA kann das Gel überhaupt nicht durchwandern."
+                ],
+                correctIndex: 2,
+                explanation: "Neben der Basenpaarlänge bestimmt die Konformation die Geschwindigkeit: Supercoiled-DNA ist besonders kompakt verdrillt und wandert daher schneller durch die Gelporen als lineare oder zirkuläre DNA."
+            },
+            {
+                letter: "O",
+                question: "Wo befinden sich beim Versuchsaufbau die mit einem Kamm erzeugten Geltaschen (Sample wells)?",
+                options: [
+                    "Auf der Seite des Pluspols (Anode).",
+                    "Genau in der Mitte zwischen Kathode und Anode.",
+                    "Auf der Seite des Minuspols (Kathode).",
+                    "Außerhalb der Pufferlösung direkt am Netzteil."
+                ],
+                correctIndex: 2,
+                explanation: "Da negativ geladene DNA zum Pluspol (Anode) wandert, werden die Proben auf der Seite des Minuspols (Kathode) in die Geltaschen pipettiert."
+            },
+            {
+                letter: "S",
+                question: "Wozu lässt man bei der Gelelektrophorese einen DNA-Größenstandard (DNA-Ladder / Marker) mitlaufen?",
+                options: [
+                    "Um die genaue Basensequenz (A, T, C, G) der Probe direkt abzulesen.",
+                    "Als Referenz mit Fragmenten bekannter Länge, um die Größe (in bp) der Probenbanden zu bestimmen.",
+                    "Um die DNA-Stränge enzymatisch in kleinere Stücke zu schneiden.",
+                    "Um die elektrische Spannung in der Gelkammer konstant zu halten."
+                ],
+                correctIndex: 1,
+                explanation: "Der Marker enthält DNA-Fragmente bekannter Länge in Basenpaaren (bp). Liegt eine Probenbande auf derselben Höhe wie z. B. die 500-bp-Bande des Markers, ist das Fragment ca. 500 bp lang."
+            },
+            {
+                letter: "E",
+                question: "Welche Aufgaben erfüllen der Ladepuffer und fluoreszierende Farbstoffe bei der Gelelektrophorese?",
+                options: [
+                    "Der Ladepuffer erleichtert das Einfüllen und macht den Lauf sichtbar; Fluoreszenzfarbstoffe machen die Banden unter UV-/Blaulicht sichtbar.",
+                    "Der Ladepuffer zerschneidet die DNA, während der Farbstoff die Poren im Gel vergrößert.",
+                    "Beide Stoffe dienen ausschließlich dazu, die DNA positiv aufzuladen.",
+                    "Fluoreszierende Farbstoffe werden vor dem Gießen in den Kamm gemischt, um das Gel zu härten."
+                ],
+                correctIndex: 0,
+                explanation: "Der Ladepuffer beschwert die DNA-Probe beim Pipettieren in die Taschen und zeigt die Lauffront an. Nach dem Lauf machen fluoreszierende Farbstoffe unter UV- oder Blaulicht die DNA-Banden sichtbar."
+            },
+            {
+                letter: "G",
+                showGelVisual: true,
+                question: "In dem Kriminalistik-Beispiel aus dem Portfolio („DNA from Gum“): Welcher Verdächtige stimmt mit der Tatort-DNA überein?",
+                options: [
+                    "Suspect A (weist nur eine Bande bei ca. 2500 bp auf)",
+                    "Suspect C (weist Banden bei 3500 bp und 800 bp auf)",
+                    "Keiner der Verdächtigen (Blank)",
+                    "Suspect B (weist die gleichen zwei Banden bei ca. 2500 bp und 1500 bp auf)"
+                ],
+                correctIndex: 3,
+                explanation: "Die Kaugummi-Spur (Spur 2) zeigt zwei Banden auf Höhe von ca. 2500 bp und 1500 bp. Exakt dasselbe Bandenmuster findet sich bei Suspect B (Spur 4)."
+            },
+            {
+                letter: "E",
+                question: "Wofür wird die Gelelektrophorese in Forschung und Medizin unter anderem eingesetzt?",
+                options: [
+                    "Zur Kontrolle von PCR-Produkten, nach Restriktionsenzym-Verdau, bei Vaterschaftstests und als SDS-PAGE für Proteine.",
+                    "Zur direkten Vervielfältigung von DNA ohne Enzyme.",
+                    "Zur Umwandlung von RNA in Proteine an den Ribosomen.",
+                    "Zur Bestimmung des Blutdrucks und der Sauerstoffsättigung."
+                ],
+                correctIndex: 0,
+                explanation: "Laut Portfolio wird die Elektrophorese zur Kontrolle von PCR-Produkten, bei der Analyse nach Restriktionsenzym-Schnitten (Endonuklease-Verdau), bei Vaterschaftstests sowie als SDS-PAGE zur Proteinanalyse genutzt."
+            },
+            {
+                letter: "L",
+                question: "Welche wichtige Grenze hat die klassische Gelelektrophorese bei der Auswertung?",
+                options: [
+                    "Die genaue Basensequenz wird nicht bestimmt, und gleich lange Fragmente lassen sich nicht unterscheiden.",
+                    "Es kann immer nur eine einzige Probe pro Gel untersucht werden.",
+                    "DNA-Fragmente können nach dem Lauf nicht mit anderen Proben verglichen werden.",
+                    "Das Verfahren funktioniert nur bei Proteinen, nicht bei DNA-Fragmenten."
+                ],
+                correctIndex: 0,
+                explanation: "Die Gelelektrophorese trennt Fragmente nur nach ihrer Länge/Größe. Ob zwei gleich lange DNA-Fragmente dieselbe Basensequenz besitzen, lässt sich anhand der Banden allein nicht erkennen."
+            }
+        ];
+
+        // Spielzustand
+        let currentIndex = 0;
+        let userAnswers = []; // Speichert { questionIndex, selectedIndex, isCorrect }
+        let answeredCurrent = false;
+
+        // DOM-Elemente
+        const codewordBoxesEl = document.getElementById("codeword-boxes");
+        const unlockedCountEl = document.getElementById("unlocked-count");
+        const currentQNumEl = document.getElementById("current-q-num");
+        const totalQNumEl = document.getElementById("total-q-num");
+        const rewardLetterHintEl = document.getElementById("reward-letter-hint");
+        const questionTextEl = document.getElementById("question-text");
+        const gelVisualEl = document.getElementById("gel-visual");
+        const optionsListEl = document.getElementById("options-list");
+        const feedbackBoxEl = document.getElementById("feedback-box");
+        const feedbackIconEl = document.getElementById("feedback-icon");
+        const feedbackTitleEl = document.getElementById("feedback-title");
+        const feedbackCorrectAnswerEl = document.getElementById("feedback-correct-answer");
+        const feedbackExplanationEl = document.getElementById("feedback-explanation");
+        const nextBtnEl = document.getElementById("next-btn");
+
+        const quizContainerEl = document.getElementById("quiz-container");
+        const resultContainerEl = document.getElementById("result-container");
+        const progressBadgeEl = document.getElementById("progress-badge");
+
+        // Initialisierung
+        function initQuiz() {
+            currentIndex = 0;
+            userAnswers = [];
+            answeredCurrent = false;
+
+            totalQNumEl.textContent = quizQuestions.length;
+            quizContainerEl.classList.remove("hidden");
+            progressBadgeEl.classList.remove("hidden");
+            resultContainerEl.classList.add("hidden");
+
+            renderCodewordBar();
+            renderQuestion();
+        }
+
+        // Rendert die 10 Kästchen für das Lösungswort oben (gruppiert in 7 + 3 für AGAROSE-GEL)
+        function renderCodewordBar(revealAll = false) {
+            codewordBoxesEl.innerHTML = "";
+            let unlockedCount = 0;
+
+            quizQuestions.forEach((q, idx) => {
+                // Kleiner Trennstrich nach dem 7. Buchstaben (AGAROSE - GEL)
+                if (idx === 7) {
+                    const separator = document.createElement("span");
+                    separator.textContent = "-";
+                    separator.className = "text-slate-600 font-bold px-0.5 select-none";
+                    codewordBoxesEl.appendChild(separator);
+                }
+
+                const record = userAnswers.find(a => a.questionIndex === idx);
+                const box = document.createElement("div");
+                box.className = "w-7 h-9 sm:w-10 sm:h-11 rounded-lg sm:rounded-xl flex items-center justify-center font-extrabold text-sm sm:text-lg border transition-all select-none";
+
+                if (record && record.isCorrect) {
+                    unlockedCount++;
+                    box.textContent = q.letter;
+                    box.classList.add("bg-emerald-500/20", "border-emerald-400", "text-emerald-300", "uv-glow-green", "animate-pop");
+                } else if (record && !record.isCorrect) {
+                    if (revealAll) {
+                        box.textContent = q.letter;
+                        box.classList.add("bg-amber-500/20", "border-amber-400", "text-amber-300");
+                    } else {
+                        box.textContent = "?";
+                        box.classList.add("bg-rose-500/20", "border-rose-500/70", "text-rose-400", "uv-glow-red");
+                    }
+                } else if (idx === currentIndex && !revealAll) {
+                    box.textContent = "?";
+                    box.classList.add("bg-cyan-500/15", "border-cyan-400/70", "text-cyan-300");
+                } else {
+                    box.textContent = "?";
+                    box.classList.add("bg-slate-900", "border-slate-800", "text-slate-600");
+                }
+
+                codewordBoxesEl.appendChild(box);
+            });
+
+            unlockedCountEl.textContent = `${unlockedCount} / ${quizQuestions.length} Buchstaben`;
+        }
+
+        // Rendert die aktuelle Frage
+        function renderQuestion() {
+            answeredCurrent = false;
+            const q = quizQuestions[currentIndex];
+
+            currentQNumEl.textContent = currentIndex + 1;
+            rewardLetterHintEl.textContent = `Buchstabe #${currentIndex + 1}`;
+            questionTextEl.textContent = q.question;
+
+            // Optionales Gel-Diagramm für Frage 6 ein-/ausblenden
+            if (q.showGelVisual) {
+                gelVisualEl.classList.remove("hidden");
+            } else {
+                gelVisualEl.classList.add("hidden");
+            }
+
+            // Feedback & Weiter-Button zurücksetzen
+            feedbackBoxEl.classList.add("hidden");
+            feedbackCorrectAnswerEl.classList.add("hidden");
+            nextBtnEl.classList.add("hidden");
+            nextBtnEl.textContent = currentIndex === quizQuestions.length - 1 ? "Zur Auswertung →" : "Nächste Frage →";
+
+            // Antwortmöglichkeiten rendern
+            optionsListEl.innerHTML = "";
+            const optionLabels = ["A", "B", "C", "D"];
+
+            q.options.forEach((optText, optIdx) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "w-full text-left p-4 rounded-2xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/50 transition-all flex items-start gap-3.5 group cursor-pointer";
+                btn.innerHTML = `
+                    <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 group-hover:border-cyan-400 text-xs font-bold text-slate-300 group-hover:text-cyan-300 flex items-center justify-center shrink-0 mt-0.5 transition-colors">
+                        ${optionLabels[optIdx]}
+                    </span>
+                    <span class="text-sm sm:text-base text-slate-100 font-medium leading-snug">${optText}</span>
+                `;
+                btn.addEventListener("click", () => handleAnswer(optIdx));
+                optionsListEl.appendChild(btn);
+            });
+
+            renderCodewordBar();
+        }
+
+        // Verarbeitet die gewählte Antwort
+        function handleAnswer(selectedIndex) {
+            if (answeredCurrent) return;
+            answeredCurrent = true;
+
+            const q = quizQuestions[currentIndex];
+            const isCorrect = selectedIndex === q.correctIndex;
+
+            userAnswers.push({
+                questionIndex: currentIndex,
+                selectedIndex: selectedIndex,
+                isCorrect: isCorrect
+            });
+
+            // Buttons visuell markieren & sperren
+            const buttons = optionsListEl.querySelectorAll("button");
+            buttons.forEach((btn, idx) => {
+                btn.disabled = true;
+                btn.classList.remove("hover:bg-slate-800", "hover:border-cyan-500/50", "cursor-pointer");
+                btn.classList.add("cursor-default");
+
+                const badge = btn.querySelector("span:first-child");
+
+                if (idx === q.correctIndex) {
+                    // Richtige Antwort immer grün hervorheben
+                    btn.classList.remove("bg-slate-800/70", "border-slate-700/80");
+                    btn.classList.add("bg-emerald-950/70", "border-emerald-500", "uv-glow-green");
+                    badge.classList.remove("bg-slate-900", "border-slate-700", "text-slate-300");
+                    badge.classList.add("bg-emerald-500", "border-emerald-400", "text-slate-950");
+                } else if (idx === selectedIndex && !isCorrect) {
+                    // Falsch gewählte Antwort rot markieren
+                    btn.classList.remove("bg-slate-800/70", "border-slate-700/80");
+                    btn.classList.add("bg-rose-950/70", "border-rose-500", "uv-glow-red");
+                    badge.classList.remove("bg-slate-900", "border-slate-700", "text-slate-300");
+                    badge.classList.add("bg-rose-500", "border-rose-400", "text-white");
+                } else {
+                    btn.classList.add("opacity-50");
+                }
+            });
+
+            // Feedback-Box befüllen
+            feedbackBoxEl.classList.remove("hidden", "bg-emerald-950/40", "border-emerald-800", "bg-rose-950/40", "border-rose-800");
+
+            if (isCorrect) {
+                feedbackBoxEl.classList.add("bg-emerald-950/40", "border-emerald-700/70");
+                feedbackIconEl.innerHTML = `<span class="w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-bold flex items-center justify-center text-xs">✓</span>`;
+                feedbackTitleEl.textContent = `Richtig! Buchstabe „${q.letter}“ aufgedeckt.`;
+                feedbackTitleEl.className = "font-bold text-base mb-1 text-emerald-400";
+                feedbackCorrectAnswerEl.classList.add("hidden");
+            } else {
+                feedbackBoxEl.classList.add("bg-rose-950/40", "border-rose-700/70");
+                feedbackIconEl.innerHTML = `<span class="w-6 h-6 rounded-full bg-rose-500 text-white font-bold flex items-center justify-center text-xs">✕</span>`;
+                feedbackTitleEl.textContent = `Leider falsch! Kästchen #${currentIndex + 1} bleibt gesperrt (?).`;
+                feedbackTitleEl.className = "font-bold text-base mb-1 text-rose-400";
+                feedbackCorrectAnswerEl.textContent = `Richtige Antwort: ${q.options[q.correctIndex]}`;
+                feedbackCorrectAnswerEl.classList.remove("hidden");
+            }
+
+            feedbackExplanationEl.textContent = q.explanation;
+            nextBtnEl.classList.remove("hidden");
+
+            renderCodewordBar();
+        }
+
+        // Weiter zur nächsten Frage oder Auswertung
+        nextBtnEl.addEventListener("click", () => {
+            if (currentIndex < quizQuestions.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        // Auswertungsbildschirm anzeigen
+        function showResults() {
+            quizContainerEl.classList.add("hidden");
+            progressBadgeEl.classList.add("hidden");
+            resultContainerEl.classList.remove("hidden");
+
+            const correctCount = userAnswers.filter(a => a.isCorrect).length;
+            const wrongAnswers = userAnswers.filter(a => !a.isCorrect);
+
+            document.getElementById("final-score").textContent = correctCount;
+
+            const scoreBadge = document.getElementById("score-badge");
+            const resultSubtitle = document.getElementById("result-subtitle");
+            const codewordPromptText = document.getElementById("codeword-prompt-text");
+            const codewordInput = document.getElementById("codeword-input");
+            const codewordStatusMsg = document.getElementById("codeword-status-msg");
+
+            codewordStatusMsg.classList.add("hidden");
+
+            if (correctCount === quizQuestions.length) {
+                scoreBadge.textContent = "Perfekt • Alle Banden getroffen!";
+                scoreBadge.className = "inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40";
+                resultSubtitle.textContent = "Du hast alle 10 Fragen richtig beantwortet und das komplette Lösungswort gesammelt.";
+                codewordPromptText.textContent = "Alle 10 Buchstaben wurden aufgedeckt! Bestätige das Lösungswort:";
+                codewordInput.value = SOLUTION_WORD;
+            } else {
+                scoreBadge.textContent = "Auswertung & Korrektur";
+                scoreBadge.className = "inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40";
+                resultSubtitle.textContent = `Dir fehlen noch ${wrongAnswers.length} Buchstabe(n). Kannst du das Lösungswort trotzdem erraten?`;
+                codewordPromptText.textContent = "Gib das gesuchte 10-stellige Lösungswort ein (ohne Bindestrich) oder klicke auf „Auflösen“:";
+                codewordInput.value = "";
+            }
+
+            // Übersicht über falsche Antworten (oder alle Lösungen bei 100%)
+            const reviewHeading = document.getElementById("review-heading");
+            const reviewList = document.getElementById("review-list");
+            reviewList.innerHTML = "";
+
+            if (wrongAnswers.length > 0) {
+                reviewHeading.innerHTML = `<span class="text-rose-400">●</span> Korrektur deiner falschen Antworten (${wrongAnswers.length})`;
+                wrongAnswers.forEach(item => {
+                    const q = quizQuestions[item.questionIndex];
+                    const card = document.createElement("div");
+                    card.className = "bg-slate-950/90 border border-slate-800 rounded-2xl p-4 text-sm space-y-2";
+                    card.innerHTML = `
+                        <div class="flex items-center justify-between text-xs text-slate-400">
+                            <span>Frage ${item.questionIndex + 1}</span>
+                            <span class="px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-bold">Fehlender Buchstabe: ${q.letter}</span>
+                        </div>
+                        <p class="font-bold text-white">${q.question}</p>
+                        <div class="p-2.5 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300">
+                            <span class="font-semibold">Deine Antwort:</span> ${q.options[item.selectedIndex]}
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300">
+                            <span class="font-semibold">Richtige Antwort:</span> ${q.options[q.correctIndex]}
+                        </div>
+                        <p class="text-slate-300 text-xs leading-relaxed pt-1">
+                            <span class="font-semibold text-cyan-400">Erklärung:</span> ${q.explanation}
+                        </p>
+                    `;
+                    reviewList.appendChild(card);
+                });
+            } else {
+                reviewHeading.innerHTML = `<span class="text-emerald-400">✓</span> Alle 10 Fragen fehlerfrei gelöst!`;
+                const card = document.createElement("div");
+                card.className = "bg-emerald-950/20 border border-emerald-800/50 rounded-2xl p-4 text-sm text-slate-300";
+                card.textContent = "Starke Leistung! Du beherrschst Aufbau, Ablauf, Auswertung und Grenzen der Gelelektrophorese sicher.";
+                reviewList.appendChild(card);
+            }
+        }
+
+        // Lösungswort-Prüfung (ignoriert optional eingegebene Leerzeichen oder Bindestriche)
+        document.getElementById("check-codeword-btn").addEventListener("click", () => {
+            const rawVal = document.getElementById("codeword-input").value.trim().toUpperCase();
+            const normalizedVal = rawVal.replace(/[\s-]/g, "");
+            const statusMsg = document.getElementById("codeword-status-msg");
+            statusMsg.classList.remove("hidden", "text-emerald-400", "text-rose-400");
+
+            if (normalizedVal === SOLUTION_WORD) {
+                statusMsg.textContent = `✓ Korrekt! Das Lösungswort lautet „AGAROSE-GEL“ – alle Buchstaben wurden aufgedeckt.`;
+                statusMsg.classList.add("text-emerald-400");
+                renderCodewordBar(true);
+            } else {
+                statusMsg.textContent = `✕ „${rawVal || "..."}“ ist nicht richtig. Schau dir die Erklärungen unten an oder nutze „Auflösen“!`;
+                statusMsg.classList.add("text-rose-400");
+            }
+        });
+
+        // Lösungswort direkt auflösen
+        document.getElementById("reveal-codeword-btn").addEventListener("click", () => {
+            const codewordInput = document.getElementById("codeword-input");
+            const statusMsg = document.getElementById("codeword-status-msg");
+            codewordInput.value = SOLUTION_WORD;
+            statusMsg.classList.remove("hidden", "text-rose-400");
+            statusMsg.classList.add("text-emerald-400");
+            statusMsg.textContent = "Lösungswort aufgedeckt: AGAROSE-GEL";
+            renderCodewordBar(true);
+        });
+
+        // Enter-Taste im Eingabefeld unterstützen
+        document.getElementById("codeword-input").addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                document.getElementById("check-codeword-btn").click();
+            }
+        });
+
+        // Quiz neu starten
+        document.getElementById("restart-btn").addEventListener("click", initQuiz);
+
+        // Start beim Laden
+        window.addEventListener("DOMContentLoaded", initQuiz);
+    </script>
+</body>
+</html>
